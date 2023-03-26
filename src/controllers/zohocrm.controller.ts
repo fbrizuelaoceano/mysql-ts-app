@@ -66,28 +66,49 @@ export async function getTestOAuthKeyWork(req: Request, res: Response): Promise<
     });
 }
 
-export async function getContacts(req: Request, res: Response): Promise<Response> {
+async function getOAuthKeyWorkToken(): Promise<string> {
     try {
         if (workToken.length > 0) {
-            const response = await axios.get(
-                `${urlZoho}/Contacts`,
-                {
+            return workToken;
+        } else {
+            const response = await axios.post(`https://accounts.zoho.com/oauth/v2/token`,
+                data, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${workToken}`
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 }
             );
 
-            console.log("response",response.data.data);
+            console.log("response",response.data);
 
-            return res.json({
-                data: response.data.data
-            });
-        }else{
-            return res.json({
-                messagge: "Hubo un error"
-            });
+            workToken = response.data.access_token
+            console.log("workToken",workToken);
+
+            return workToken;
         }
+    } catch (error) {
+        console.log("error:",error);
+        throw new Error("No se pudo obtener el token OAuth.");
+    }
+}
+
+export async function getContacts(req: Request, res: Response): Promise<Response> {
+    try {
+        const workToken = await getOAuthKeyWorkToken();
+        const response = await axios.get(
+            `${urlZoho}/Contacts`,
+            {
+                headers: {
+                    'Authorization': `Zoho-oauthtoken ${workToken}`
+                }
+            }
+        );
+
+        console.log("response",response.data.data);
+
+        return res.json({
+            data: response.data.data
+        });
     } catch (error) {
         console.log("error:",error);
         return res.json({
@@ -117,8 +138,9 @@ export async function getContactById(req: Request, res: Response): Promise<Respo
                 data: response.data.data
             });
         }else{
-            return res.json({
-                messagge: "Hubo un error"
+              // Si no hay token, devuelve un error 401 (No autorizado)
+            return res.status(401).json({
+                error: "No se proporcionó un token de autenticación"
             });
         }
     } catch (error) {
