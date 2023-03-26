@@ -6,7 +6,6 @@ import IndexRoutes from './routes/index.routes';
 import PostRoutes from './routes/post.routes'; 
 import ZohoCRMRoutes from './routes/zohocrm.routes'; 
 
-
 export class App {
 
     private app: Application;
