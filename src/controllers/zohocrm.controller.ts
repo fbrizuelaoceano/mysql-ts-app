@@ -102,7 +102,7 @@ async function ProcesarEnCRM(callback: Function){
         };
     }
 };
-
+// http://localhost:3000/zohocrm/Contacts
 export async function getContacts(req: Request, res: Response): Promise<Response> {
     try {
         const response = await ProcesarEnCRM(async ()=>{
@@ -133,6 +133,7 @@ export async function getContacts(req: Request, res: Response): Promise<Response
         });
     }
 }
+// http://localhost:3000/zohocrm/Contacts/5704643000000428002
 export async function getContactById(req: Request, res: Response): Promise<Response> {
     console.log("getContactById()");
     try {
@@ -161,6 +162,7 @@ export async function getContactById(req: Request, res: Response): Promise<Respo
         });
     }
 }
+// http://localhost:3000/zohocrm/Contacts
 export async function insertContact(req: Request, res: Response): Promise<Response> {
     //mandarle esto por post como json
     // {
