@@ -73,11 +73,40 @@ async function SolicitarNuevoWorkToken(){
         throw new Error(`No se pudo obtener el token OAuth. ${error}`);
     }
 }
+
+async function ProcesarEnCRM(callback: Function){
+    if(await VerifyTimeTokenZohoCRM()){//Usar token
+        console.log("Se sigue utilizando el token. No pasaron mas de 55 minutos.");
+      
+        const response = await callback();
+
+        // return res.json({
+        //     status: "ok",
+        //     time: "Se sigue utilizando el token. No pasaron mas de 55 minutos.",
+        //     data: response.data
+        // });
+        return {
+            status: "ok",
+            time: "Se sigue utilizando el token. No pasaron mas de 55 minutos.",
+            data: response
+        };
+    }else{//Renovar token
+        console.log("Se intento renovar el token. Pasaron mas de 55 minutos.");
+        SolicitarNuevoWorkToken();
+        // return res.json({
+        //     status: "ok",
+        //     time: "Se intento renovar el token. Pasaron mas de 55 minutos.",
+        // });
+        return {
+            status: "ok",
+            time: "Se intento renovar el token. Pasaron mas de 55 minutos.",
+        };
+    }
+};
 export async function testeo(req: Request, res: Response): Promise<Response>{
     try {
 
-        if(await VerifyTimeTokenZohoCRM()){//Usar token
-            console.log("Se sigue utilizando el token. No pasaron mas de 55 minutos.");
+    const response = await ProcesarEnCRM(async ()=>{
 
             console.log("testeo(), getContacts()");
             let workToken = process.env.WORK_TOKEN || 'Indefinido';
@@ -94,20 +123,10 @@ export async function testeo(req: Request, res: Response): Promise<Response>{
         
             console.log("testeo(), getContacts(), response", response.data.data);
 
-            return res.json({
-                status: "ok",
-                time: "Se sigue utilizando el token. No pasaron mas de 55 minutos.",
-                data: response.data
-            });
-        }else{//Renovar token
-            console.log("Se intento renovar el token. Pasaron mas de 55 minutos.");
-            SolicitarNuevoWorkToken();
-            return res.json({
-                status: "ok",
-                time: "Se intento renovar el token. Pasaron mas de 55 minutos.",
-            });
-        }
+            return response.data.data;
+       });
         
+       return res.json({response});
     } catch (error) {
         console.log("error:", error);
         return res.json({
@@ -169,61 +188,58 @@ async function getOAuthKeyWorkToken(): Promise<string> {
 }
 
 export async function getContacts(req: Request, res: Response): Promise<Response> {
-    console.log("getContacts()");
-    let workToken = process.env.WORK_TOKEN || 'Indefinido';
     try {
-        const workToken = await getOAuthKeyWorkToken();
-        const response = await axios.get(
-            `${urlZoho}/Contacts`,
-            {
-                headers: {
-                    'Authorization': `Zoho-oauthtoken ${workToken}`
-                }
-            }
-        );
-
-        console.log("response",response.data.data);
-
-        return res.json({
-            data: response.data.data
-        });
+        const response = await ProcesarEnCRM(async ()=>{
+    
+                console.log("testeo(), getContacts()");
+                let workToken = process.env.WORK_TOKEN || 'Indefinido';
+                console.log("testeo(), getContacts(), process.env.WORK_TOKEN", process.env.WORK_TOKEN );
+    
+                const response = await axios.get(
+                    `${urlZoho}/Contacts`,
+                    {
+                        headers: {
+                            'Authorization': `Zoho-oauthtoken ${workToken}`
+                        }
+                    }
+                );
+            
+                console.log("testeo(), getContacts(), response", response.data.data);
+    
+                return response.data.data;
+           });
+            
+           return res.json({response});
     } catch (error) {
-        console.log("error:",error);
+        console.log("error:", error);
         return res.json({
             error: error
         });
     }
 }
 export async function getContactById(req: Request, res: Response): Promise<Response> {
-    let workToken = process.env.WORK_TOKEN || 'Indefinido';
-
-    const contactId = req.params.contactId;
-
-    console.log("contactId", contactId);
-   
+    console.log("getContactById()");
     try {
-        if (workToken.length > 0) {
-            // 5704643000000413195
-            const response = await axios.get(`${urlZoho}/Contacts/search?criteria=(id:equals:${contactId})`, {
-                    headers: {
-                        'Authorization': `Zoho-oauthtoken ${workToken}`
+        const contactId = req.params.contactId;
+        console.log("getContactById(), parametro contactId es: ", contactId);
+
+        const response = await ProcesarEnCRM(async ()=>{
+                // 5704643000000413195
+                const response = await axios.get(`${urlZoho}/Contacts/search?criteria=(id:equals:${contactId})`, {
+                        headers: {
+                            'Authorization': `Zoho-oauthtoken ${process.env.WORK_TOKEN}`
+                        }
                     }
-                }
-            );
-
-            console.log("response",response.data.data);
-
-            return res.json({
-                data: response.data.data
-            });
-        }else{
-              // Si no hay token, devuelve un error 401 (No autorizado)
-            return res.status(401).json({
-                error: "No se proporcionó un token de autenticación"
-            });
-        }
+                );
+    
+                console.log("response",response.data.data);
+    
+                return response.data.data || [];
+        });
+            
+        return res.json({response});
     } catch (error) {
-        console.log("error:",error);
+        console.log("error:", error);
         return res.json({
             error: error
         });
