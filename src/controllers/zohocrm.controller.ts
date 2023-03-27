@@ -246,47 +246,45 @@ export async function getContactById(req: Request, res: Response): Promise<Respo
     }
 }
 export async function insertContact(req: Request, res: Response): Promise<Response> {
-    let workToken = process.env.WORK_TOKEN || 'Indefinido';
-
-    const contactBody = req.body;
-
-    console.log("contactBody", contactBody);
+    //mandarle esto por post como json
+    // {
+    //     "data": [
+    //         {
+    //             "First_Name": "John4",
+    //             "Last_Name": "Doe4",
+    //             "Email": "john4.doe4@example4.com",
+    //             "Phone": "1244444444"
+    //         }
+    //     ]
+    // }
     try {
-        if (workToken.length > 0) {
+        const response = await ProcesarEnCRM(async ()=>{
+
+            const contactData = req.body;
+            console.log("insertContact(), contactData para insertar en zoho:", contactData);
+
             // 5704643000000413195
             const response = await axios.post(
                 `${urlZoho}/Contacts`,
-                {
-                    data: [
-                        {
-                            First_Name: "John3",
-                            Last_Name: "Doe3",
-                            Email: "john3.doe3@example3.com",
-                            Phone: "1233333333"
-                        }
-                    ]
-                },
+                contactData,
                 {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${workToken}`,
+                        'Authorization': `Zoho-oauthtoken ${process.env.WORK_TOKEN}`,
                         'Content-Type': 'application/json'
                     }
                 }
             );
 
-            console.log("response",response.data.data);
+            console.log("insertContact(), response de la insersion en zoho: ",response.data.data);
+            return response.data.data;
+        });
+            
+            const contactBody = req.body;
+            console.log("insertContact(), contactBody para insertar en zoho:", contactBody);
 
-            return res.json({
-                data: response.data.data
-            });
-
-        }else{
-            return res.json({
-                messagge: "Hubo un error"
-            });
-        }
+           return res.json({response});
     } catch (error) {
-        console.log("error:",error);
+        console.log("error:", error);
         return res.json({
             error: error
         });
