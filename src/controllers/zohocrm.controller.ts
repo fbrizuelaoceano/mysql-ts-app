@@ -73,7 +73,6 @@ async function SolicitarNuevoWorkToken(){
         throw new Error(`No se pudo obtener el token OAuth. ${error}`);
     }
 }
-
 async function ProcesarEnCRM(callback: Function){
     if(await VerifyTimeTokenZohoCRM()){//Usar token
         console.log("Se sigue utilizando el token. No pasaron mas de 55 minutos.");
@@ -103,89 +102,6 @@ async function ProcesarEnCRM(callback: Function){
         };
     }
 };
-export async function testeo(req: Request, res: Response): Promise<Response>{
-    try {
-
-    const response = await ProcesarEnCRM(async ()=>{
-
-            console.log("testeo(), getContacts()");
-            let workToken = process.env.WORK_TOKEN || 'Indefinido';
-            console.log("testeo(), getContacts(), process.env.WORK_TOKEN", process.env.WORK_TOKEN );
-
-            const response = await axios.get(
-                `${urlZoho}/Contacts`,
-                {
-                    headers: {
-                        'Authorization': `Zoho-oauthtoken ${workToken}`
-                    }
-                }
-            );
-        
-            console.log("testeo(), getContacts(), response", response.data.data);
-
-            return response.data.data;
-       });
-        
-       return res.json({response});
-    } catch (error) {
-        console.log("error:", error);
-        return res.json({
-            error: error
-        });
-    }
-} 
-
-async function EenvioZohoCRM(): Promise<string> {
-
-    const refresh_token = process.env.REFRESH_TOKEN || 'Indefinido';
-    
-    try {
-        
-            return process.env.WORK_TOKEN || 'Indefinido';
-    } catch (error) {
-        console.log("error:",error);
-        throw new Error("No se pudo obtener el token OAuth.");
-    }
-}
-
-async function getOAuthKeyWorkToken(): Promise<string> {
-    
-    console.log("getOAuthKeyWorkToken(), client_id",client_id);
-    console.log("getOAuthKeyWorkToken(), client_secret",client_secret);
-    console.log("getOAuthKeyWorkToken(), refresh_token",refresh_token);
-    
-    try {
-        let workToken = process.env.WORK_TOKEN || 'Indefinido';
-        console.log("workToken", workToken);
-
-        if (workToken.length > 0) {
-            return workToken;
-        } else {
-            const data = new URLSearchParams();
-            data.append('grant_type', 'refresh_token');
-            data.append('refresh_token', refresh_token);
-            data.append('client_id', client_id);
-            data.append('client_secret', client_secret);
-
-            const response = await axios.post(`https://accounts.zoho.com/oauth/v2/token`,
-                data, {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                }
-            );
-
-            console.log("response",response.data);
-            process.env.WORK_TOKEN = response.data.access_token;
-                console.log("process.env.WORK_TOKEN", process.env.WORK_TOKEN || 'Indefinido');
-
-            return process.env.WORK_TOKEN || 'Indefinido';
-        }
-    } catch (error) {
-        console.log("error:",error);
-        throw new Error("No se pudo obtener el token OAuth.");
-    }
-}
 
 export async function getContacts(req: Request, res: Response): Promise<Response> {
     try {
@@ -290,70 +206,36 @@ export async function insertContact(req: Request, res: Response): Promise<Respon
         });
     }
 }
-export async function getOAuthKeyWork(req: Request, res: Response): Promise<Response> {
-    let workToken = process.env.WORK_TOKEN || 'Indefinido';
-    console.log("getOAuthKeyWork, workToken", workToken);
-    
+
+
+export async function testeo(req: Request, res: Response): Promise<Response>{
     try {
 
-        //Si es valido tengo esto 
-        // {
-        //     "access_token": "1000.2c7bf06e523f23d6b5b4e866c78935c4.00bd56aaa2ae9227533964741f0ad74d",
-        //     "api_domain": "https://www.zohoapis.com",
-        //     "token_type": "Bearer",
-        //     "expires_in": 3600
-        // }
-        // else
-        // {
-        //     "error": "invalid_code"
-        // }
-        if (workToken.length <= 0) {
-            const data = new URLSearchParams();
-            data.append('grant_type', 'refresh_token');
-            data.append('refresh_token', refresh_token);
-            data.append('client_id', client_id);
-            data.append('client_secret', client_secret);
+    const response = await ProcesarEnCRM(async ()=>{
 
-            const response = await axios.post(`https://accounts.zoho.com/oauth/v2/token`,
-                data, {
+            console.log("testeo(), getContacts()");
+            let workToken = process.env.WORK_TOKEN || 'Indefinido';
+            console.log("testeo(), getContacts(), process.env.WORK_TOKEN", process.env.WORK_TOKEN );
+
+            const response = await axios.get(
+                `${urlZoho}/Contacts`,
+                {
                     headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                        'Authorization': `Zoho-oauthtoken ${workToken}`
                     }
                 }
             );
+        
+            console.log("testeo(), getContacts(), response", response.data.data);
 
-            console.log("getOAuthKeyWork, response",response.data);
-
-            workToken = response.data.access_token
-            console.log("getOAuthKeyWork, workToken",workToken);
-
-            process.env.WORK_TOKEN = response.data.access_token;
-                console.log("getOAuthKeyWork, process.env.WORK_TOKEN", process.env.WORK_TOKEN || 'Indefinido');
-
-
-            return res.json({
-                responseZOHOCRM: response.data,
-                envWorkToken: process.env.WORK_TOKEN || 'Indefinido'
-            });
-        }else{
-            return res.json({
-                messagge: "Ya hay un token",
-                workToken: workToken
-            });
-        }
+            return response.data.data;
+       });
+        
+       return res.json({response});
     } catch (error) {
-        console.log("getOAuthKeyWork, error:",error);
+        console.log("error:", error);
         return res.json({
             error: error
         });
     }
-}
-export async function getTestOAuthKeyWork(req: Request, res: Response): Promise<Response> {
-    console.log("getTestOAuthKeyWork, process.env.WORK_TOKEN", process.env.WORK_TOKEN || 'Indefinido');
-    let workToken = process.env.WORK_TOKEN || 'Indefinido';
-    console.log("getTestOAuthKeyWork, workToken", workToken);
-
-    return res.json({
-        response: workToken
-    });
-}
+} 

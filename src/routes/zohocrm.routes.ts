@@ -1,10 +1,6 @@
 import { Router } from "express";
 const router = Router();
-import { getOAuthKeyWork,  getContacts, getContactById, insertContact, testeo } from '../controllers/zohocrm.controller';
-
-router.route('/getOAuthKeyWork')
-    .get(getOAuthKeyWork);
-
+import { getContacts, getContactById, insertContact, testeo } from '../controllers/zohocrm.controller';
 
 router.route("/Contacts")
     .get(getContacts)
